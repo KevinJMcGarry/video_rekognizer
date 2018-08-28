@@ -1,0 +1,21 @@
+
+
+service: rekognizer # NOTE: update this with your service name
+
+provider:
+  name: aws
+  runtime: python3.6
+  profile: ${file(../config.${self:provider.stage}.json):rekognizer.profile}
+  stage: "dev"
+  region: ${file(../config.${self:provider.stage}.json):rekognizer.region}
+
+functions:
+  startProcessingVideo:
+    handler: handler.start_processing_video
+    # connect events to our function
+    events:
+      - s3:
+          bucket: ${file(../config.${self:provider.stage}.json):rekognizer.videos_bucket}  # serverless will create this bucket for us
+          event: s3:ObjectCreated:*  # from the aws docs, this is watching for all s3 object creation events
+          rules:  # rules for our event trigger
+            - suffix: .mp4  # only trigger the handler when the uploaded file's extension is .mp4

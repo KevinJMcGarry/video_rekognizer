@@ -1,0 +1,10 @@
+# template file used by serverless
+# template files for dev, stage and prod
+
+{
+  "rekognizer": {
+    "profile": "",
+    "videos_bucket": "",
+    "videos_table": ""
+  }
+}
