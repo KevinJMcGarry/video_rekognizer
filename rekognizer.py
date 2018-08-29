@@ -1,6 +1,6 @@
 import boto3
 import pathlib
-import pprint
+import urllib
 
 session = boto3.Session(profile_name='eureka-terraform', region_name='us-east-2')
 
@@ -32,4 +32,4 @@ response = rekognition_client.start_label_detection(Video={'S3Object': {'Bucket'
 job_id = response['JobId']
 result = rekognition_client.get_label_detection(JobId=job_id)
 
-pprint.pprint(result)
+# pprint.pprint(result)
