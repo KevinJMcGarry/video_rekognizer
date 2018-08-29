@@ -12,7 +12,7 @@ provider:
   iamRoleStatements:
   - Effect: "Allow"
     Action:
-    - "rekognition:*"  # allow lambda to use all rekognition methods
+    - "rekognition:*"  # allow lambda function to use all rekognition methods
     Resource: "*"      # on any resource in aws (in this case S3 - need to fine tune this)
   - Effect: "Allow"
     Action:
@@ -21,7 +21,7 @@ provider:
     - Fn::Join:  # join arn with /*
       - ''
       - - ${self:custom.videosBucketArn}
-        - '/*'  # needed to give Rekognition access to the objects inside bucket
+        - '/*'  # needed to give lambda access to the objects inside bucket
 
 custom:  # custom variables defined below
   videosBucketArn:
