@@ -9,6 +9,31 @@ provider:
   stage: "dev"
   region: ${file(../config.${self:provider.stage}.json):rekognizer.region}
 
+  iamRoleStatements:
+  - Effect: "Allow"
+    Action:
+    - "rekognition:*"  # allow lambda to use all rekognition methods
+    Resource: "*"      # on any resource in aws (in this case S3 - need to fine tune this)
+  - Effect: "Allow"
+    Action:
+    - "s3:GetObject"  # allow lambda function the ability to get any s3 object
+    Resource:         # on the bucket dynamically defined below
+    - Fn::Join:  # join arn with /*
+      - ''
+      - - ${self:custom.videosBucketArn}
+        - '/*'  # needed to give Rekognition access to the objects inside bucket
+
+custom:  # custom variables defined below
+  videosBucketArn:
+    Fn::Join:  # use join function (a function defined by CloudFormation) - takes two arguments
+    - ':'  # delimeter that joins the list of strings (below) together with
+    - - arn
+      - aws
+      - s3
+      - ''  # space
+      - ''  # space
+      - ${file(../config.${self:provider.stage}.json):rekognizer.videos_bucket}  # bucketname
+
 functions:
   startProcessingVideo:
     handler: handler.start_processing_video
