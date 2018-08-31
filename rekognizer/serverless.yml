@@ -33,8 +33,19 @@ provider:
         - RekognitionSNSPublishRole
         - Arn  # getting the ARN attribute of the CloudFormation resource (RekognitionSNSPublishRole) defined below
 
+  # IAM permission to allow our function to write to the VideosTable
+  - Effect: "Allow"
+    Action:
+      - "dynamodb:PutItem"
+    Resource:
+      Fn::GetAtt:
+        - VideosTable  # specify VideosTable defined in resources(CloudFormation template) below
+        - Arn
 
-  environment:
+
+  environment:  # Lambda Environment Variables
+
+    DYNAMODB_TABLE_NAME: ${self:custom.videosTableName}
     REKOGNITION_SNS_TOPIC_ARN: ${self:custom.rekognitionSNSTopicArn}
     # This role is created down below in the resources section
     REKOGNITION_ROLE_ARN:
@@ -43,7 +54,11 @@ provider:
       - Arn
 
 
-custom:  # custom variables defined below
+custom:  # defining custom variables to be used in other sections of this file
+
+  # define the dynamodb table name. The actual table is created in the resources section
+  videosTableName: ${file(../config.${self:provider.stage}.json):rekognizer.videos_table}
+
   rekognitionSNSTopicArn:
     Fn::Join:
     - ':' # delimiter that joins the list of strings (below) together with
@@ -53,6 +68,7 @@ custom:  # custom variables defined below
       - Ref: AWS::Region  # sns topics are specific to a region
       - Ref: AWS::AccountId # sns topics are specific to an account
       - handleLabelDetectionTopic  # name of topic that Rekognition service will subscribe to
+
   videosBucketArn:
     Fn::Join:  # use join function (a function defined by CloudFormation) - takes two arguments
     - ':'  # delimiter that joins the list of strings (below) together with
@@ -85,6 +101,23 @@ functions:
 # Here we create things like IAM roles that will be used by
 resources:
   Resources:
+
+    # DynamoDB Related
+    VideosTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:  # define attributes of dynamo db table
+        - AttributeName: videoName  # this is the name of the Item to create
+          AttributeType: S  # the value of videoName will be a string
+        KeySchema:
+        - AttributeName: videoName  # defining the primary/unique key to use (Partition Key)
+          KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.videosTableName}  # use custom variable defined above
+
+    # SNS Related
     RekognitionSNSPublishRole:  # name of the role the Rekognition service will assume
       Type: AWS::IAM::Role
       # the rest of this is just raw CloudFormation template code
