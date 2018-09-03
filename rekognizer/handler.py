@@ -45,24 +45,34 @@ def get_video_labels(job_id):
     return response
 
 
+# function that checks the type of the data (dict, list, float) and uses
+
 def make_item(data):
+    """if we receive a dictionary, return a dictionary comprehension where we call make_item on each value
+    inside the dictionary
+    also if we receive a list, return a list comprehension where we call make_item on each value inside
+    the list"""
     if isinstance(data, dict):
-        return { k: make_item(v) for k, v in data.items() }
+        return {k: make_item(v) for k, v in data.items()}
 
     if isinstance(data, list):
-        return [ make_item(v) for v in data ]
+        return [make_item(v) for v in data]
 
-    if isinstance(data, float):
+    if isinstance(data, float):  # if data type is float, return the data as a string
         return str(data)
 
     return data
 
+
 # data argument is JobId from get_video_labels function
 # video_name and video_bucket arguments come from handle_label_detection function
 def put_labels_in_db(data, video_name, video_bucket):
-    del data['ResponseMetadata']
-    del data['JobStatus']
+    del data['ResponseMetadata']  # field data we don't need
+    del data['JobStatus']  # field data we don't need
 
+    # these two pieces of data we didn't get back from the handle_label_detection call
+    # we'll need these to associate the dynamodb record back to the original video uploaded to s3
+    # so the values being passed in are added to the data list
     data['videoName'] = video_name
     data['videoBucket'] = video_bucket
 
@@ -70,6 +80,9 @@ def put_labels_in_db(data, video_name, video_bucket):
     table_name = os.environ['DYNAMODB_TABLE_NAME']
     videos_table = dynamodb.Table(table_name)
 
+    # perform conversion on entire data structure
+    # use make_item to convert float values found in the data to strings
+    # this is to solve for the different ways python and dynamodb handle floats
     data = make_item(data)
 
     videos_table.put_item(Item=data)
