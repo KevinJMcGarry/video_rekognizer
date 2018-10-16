@@ -85,7 +85,7 @@ def put_labels_in_db(data, video_name, video_bucket):
     # this is to solve for the different ways python and dynamodb handle floats
     data = make_item(data)
 
-    videos_table.put_item(Item=data)
+    videos_table.put_item(Item=data)  # insert data into dynamodb
 
     return
 
